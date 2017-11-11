@@ -47,7 +47,7 @@ MENUMAKER="${AWK_LOCATION}"/wscan2menu.awk
 
 cli() { # {{{ # Wrapper for wpa_cli
 	if [ ! -z "$_IN_TEST" ];then # {{{ # Test Mode, Mocking wpa_cli
-		echo "Using interface 'Wifi'"
+		echo "Usando interface 'Wifi'"
 		if [ "$1" = "scan_results" ];then
 			cat data/wscan.txt
 		else
@@ -71,7 +71,7 @@ scan_results() { # {{{ # Scans for APs or shows scanned results. Writes to $stem
 		return
 	fi # }}}
 
-	echo " * Scanning For APs ..." >&2
+	echo " * Procurando redes sem fio ..." >&2
         # Get the data
 	stemp=$(mktemp /tmp/$$.XXXX.menu)
 	trap 'rm -f $stemp' INT TERM EXIT
@@ -125,7 +125,7 @@ get_userpass() { # {{{ # Get a username and password interactively
 get_password() { # {{{ # Get a password interactively
 	if [ -n "$interactive" ];then # {{{ # Stdin is a tty, ask for passphrase
 		_pret=0
-		_msg="Passphrase for '$_ss'"
+		_msg="Insira a senha para a rede '$_ss'"
 		if [ ! -n "$have_dialog" ];then # {{{ # No dialog, text only
 			stty -echo
 			printf "$_msg:" >&2
@@ -133,7 +133,7 @@ get_password() { # {{{ # Get a password interactively
 			stty echo
 			printf "\n" >&2 # }}}
 		else # {{{ # Dialog passphrase prompt
-			_psk=$(dialog --insecure --ok-label "Try It" --cancel-button "Bail" --stdout --title "Secret Stuff" --clear --passwordbox "$_msg" 0 0)
+			_psk=$(dialog --insecure --ok-label "Conectar" --cancel-button "Cancelar" --stdout --title "Senha" --clear --passwordbox "$_msg" 0 0)
 			_pret=$?
 		fi # }}}
 		echo $_psk
@@ -148,12 +148,12 @@ get_password() { # {{{ # Get a password interactively
 save_config() { # {{{ # Runs wpa_cli save_config
 	if [ -n "$interactive" ];then # {{{ # Only prompt if we're interactive
 		_yesno=""
-		printf "Do you want to save this connection? (y/N): "
+		printf "Aperte a tecla Y e depois a tecla ENTER: "
 		read _yesno
 		echo
 		echo $_yesno|egrep -q '^[Yy]'
 		if [ $? -eq 0 ];then
-			printf "Saving wpa_supplicant config.. "
+			printf "Salvando... "
 			cli save_config|tail -1
 		fi
 		unset _yesno
@@ -288,14 +288,14 @@ connect() { # {{{ # Connect to an SSID
 	if [ -n "$ssid" ];then
 		wpa_connect "$ssid"
 	else
-		echo "Connecting to the best damn thing we can find"
+		echo "Conectando"
 		lst=$(list|tail -n+3|grep -v 'HIDDEN'|head -1)
 		echo "$lst"
 		for s in $lst;do
 			ssid=$(echo $s|tr -d '"')
 			break
 		done
-		echo "Trying '$ssid'"
+		echo "Conectando '$ssid'"
 	        wpa_connect "$ssid"
 	fi
 } # }}}
@@ -309,16 +309,18 @@ menu() { # {{{ # Menu of scan results to choose an AP from
 	fi
 	scan_results >/dev/null # Will make $stemp.
 	longest=$(awk -f $PARSER $stemp|awk -F'"' 'BEGIN{longest=0}{if(length($2)>longest) longest=length($2)}END{printf longest}')
-	headers=$(printf "    %-${longest}s%s   %s" Network Signal Cababilities)
+	headers=$(printf "    %-${longest}s%s   %s" Conectar Rede Wifi)
 	size=$(cat $stemp|wc -l)
-	choice=$(awk -f $MENUMAKER $stemp|xargs dialog --title Choose --no-collapse --cancel-label Bail --ok-label Connect --column-separator '|' --stdout --menu "${headers}" 0 0 $((size-2)))
+	choice=$(awk -f $MENUMAKER $stemp|xargs dialog --title WiFi --no-collapse --cancel-label Cancelar --ok-label Conectar --column-separator '|' --stdout --menu "${headers}" 0 0 $((size-2)))
 	if [ $? -ne 0 ];then
 		clear
-		echo "Bailed. All that for nuthin'..."
+		echo "Cancelado..."
+		emulationstation
 		exit
 	fi
 	clear
 	wpa_connect "$choice"
+	emulationstation
 } # }}}
 
 usage() { # {{{ # Usage (redundant comment)
