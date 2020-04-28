@@ -315,12 +315,12 @@ menu() { # {{{ # Menu of scan results to choose an AP from
 	if [ $? -ne 0 ];then
 		clear
 		echo "Cancelado..."
-		emulationstation
+		LANG=pt_BR.UTF-8 emulationstation
 		exit
 	fi
 	clear
 	wpa_connect "$choice"
-	emulationstation
+	LANG=pt_BR.UTF-8 emulationstation
 } # }}}
 
 usage() { # {{{ # Usage (redundant comment)
